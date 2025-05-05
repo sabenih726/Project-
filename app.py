@@ -1,37 +1,56 @@
 import streamlit as st
 import pandas as pd
-import tempfile
 import zipfile
-import base64
-import os
 import io
+import base64
+import re
 from datetime import datetime
+from PyPDF2 import PdfReader
 
-# Fungsi untuk membersihkan teks
-def clean_text(text, is_name_or_pob=False):
-    text = re.sub(r"Reference No|Payment Receipt No|Jenis Kelamin|Kewarganegaraan|Pekerjaan|Alamat", "", text)
-    if is_name_or_pob:
-        text = re.sub(r"\.", "", text)
-    text = re.sub(r"[^A-Za-z0-9\s,./-]", "", text).strip()
-    return " ".join(text.split())
+# ====================
+# Ekstraksi PDF
+# ====================
+def extract_text_from_pdf_bytes(pdf_bytes):
+    reader = PdfReader(io.BytesIO(pdf_bytes))
+    text = "\n".join([page.extract_text() or "" for page in reader.pages])
+    return text
 
-# Fungsi untuk format tanggal
-def format_date(date_str):
-    match = re.search(r"(\d{2})[-/](\d{2})[-/](\d{4})", date_str)
-    if match:
-        day, month, year = match.groups()
-        return f"{day}/{month}/{year}"
-    return date_str
+# ====================
+# Fungsi Rename Aman
+# ====================
+def rename_uploaded_file(nama, nomor, original_filename):
+    safe_nama = re.sub(r'[^a-zA-Z0-9]', '_', nama.upper().strip())
+    safe_nomor = re.sub(r'[^a-zA-Z0-9]', '_', nomor.upper().strip())
+    ext = original_filename.split('.')[-1] if '.' in original_filename else 'pdf'
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return f"{safe_nama}_{safe_nomor}_{timestamp}.{ext}"
 
-# Fungsi untuk membagi tempat dan tanggal lahir
-def split_birth_place_date(text):
-    if text:
-        parts = text.split(", ")
-        if len(parts) == 2:
-            return parts[0].strip(), format_date(parts[1])
-    return text, None
+# ====================
+# Ekspor Excel + ZIP
+# ====================
+def export_to_excel_and_zip(results):
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as zipf:
+        excel_data = []
+        for result in results:
+            excel_data.append({
+                "Nama File Asli": result["original_filename"],
+                "Nama File Baru": result["new_filename"],
+                **result["extracted_data"]
+            })
+            zipf.writestr(result["new_filename"], result["pdf_bytes"])
 
-# Ekstraksi SKTT
+        df = pd.DataFrame(excel_data)
+        excel_buffer = io.BytesIO()
+        df.to_excel(excel_buffer, index=False)
+        zipf.writestr("hasil_ekstraksi.xlsx", excel_buffer.getvalue())
+    output.seek(0)
+    return output
+
+# ====================
+# Fungsi Ekstraksi Tipe Dokumen
+# (Contoh sederhana – sesuaikan sesuai kebutuhan)
+# ====================
 def extract_sktt(text):
     nik = re.search(r'NIK/Number of Population Identity\s*:\s*(\d+)', text)
     name = re.search(r'Nama/Name\s*:\s*([\w\s]+)', text)
@@ -243,57 +262,9 @@ def extract_notifikasi(text):
 
     return data
 
-# Rename file setelah upload
-def rename_file(file_path, new_name):
-    folder = tempfile.mkdtemp()
-    new_path = os.path.join(folder, new_name)
-    shutil.copy(file_path, new_path)
-    return new_path
-
-def sanitize_filename_part(text):
-    # Biarkan spasi dan tanda hubung, hapus karakter ilegal lainnya
-    return re.sub(r'[^\w\s-]', '', text).strip()
-
-def rename_uploaded_file(original_filename, extracted_data, use_name=True, use_passport=True):
-    # Ambil value nama dari berbagai kemungkinan key
-    name_raw = (
-        extracted_data.get("Name") or
-        extracted_data.get("Nama TKA") or
-        ""
-    )
-
-    # Ambil value paspor dari berbagai kemungkinan key
-    passport_raw = (
-        extracted_data.get("Passport Number") or
-        extracted_data.get("Nomor Paspor") or
-        extracted_data.get("Passport No") or
-        extracted_data.get("KITAS/KITAP") or  # Tambahan untuk SKTT
-
-        ""
-    )
-
-    # Bersihkan isi nama dan paspor
-    name = sanitize_filename_part(name_raw) if use_name and name_raw else ""
-    passport = sanitize_filename_part(passport_raw) if use_passport and passport_raw else ""
-
-    # Gabungkan untuk nama file dengan spasi
-    parts = [p for p in [name, passport] if p]
-    base_name = " ".join(parts) if parts else "RENAMED"
-    new_filename = f"{base_name}.pdf"
-
-    return rename_file(original_filename, new_filename)
-
-# Salam waktu otomatis
-def get_greeting():
-    hour = datetime.now().hour
-    if 5 <= hour < 12:
-        return "Good morning"
-    elif 12 <= hour < 17:
-        return "Good afternoon"
-    else:
-        return "Good evening"
-
-# Proses utama ekstraksi + export
+# ====================
+# Fungsi Utama Ekstraksi & Ekspor
+# ====================
 def extract_and_export(files, selected_doc_type, rename_name_checkbox, rename_passport_checkbox):
     all_data = []
     renamed_files = []
@@ -336,117 +307,24 @@ def extract_and_export(files, selected_doc_type, rename_name_checkbox, rename_pa
 
     return df, excel_path, renamed_files
 
-# Proses utama ekstraksi + export
-def extract_and_export(files, selected_doc_type, rename_name_checkbox, rename_passport_checkbox):
-    all_data = []
-    renamed_files = []
+# ====================
+# UI Streamlit
+# ====================
+def main():
+    st.set_page_config(page_title="Ekstraksi Dokumen PDF", layout="centered")
+    st.title("📄 Ekstraksi Data Dokumen Imigrasi")
 
-    # Buat folder sementara hanya sekali di awal
-    temp_dir = tempfile.mkdtemp()
+    uploaded_files = st.file_uploader("Unggah PDF", type=["pdf"], accept_multiple_files=True)
+    doc_type = st.selectbox("Pilih Jenis Dokumen", ["SKTT", "EVLN"])  # Tambahkan ITAS, ITK, dll sesuai kebutuhan
 
-    for file in files:
-        ext = file.name.split('.')[-1].lower()
-        if ext == 'pdf':
-            with pdfplumber.open(file) as pdf:
-                texts = [page.extract_text() for page in pdf.pages if page.extract_text()]
-                full_text = "\n".join(texts)
+    extractor_functions = {
+        "SKTT": extract_sktt,
+        "EVLN": extract_evln,
+        # Tambahkan: "ITAS": extract_itas, dll
+    }
 
-            # Ekstraksi sesuai jenis dokumen
-            if selected_doc_type == "SKTT":
-                extracted_data = extract_sktt(full_text)
-            elif selected_doc_type == "EVLN":
-                extracted_data = extract_evln(full_text)
-            elif selected_doc_type == "ITAS":
-                extracted_data = extract_itas(full_text)
-            elif selected_doc_type == "ITK":
-                extracted_data = extract_itk(full_text)
-            elif selected_doc_type == "Notifikasi":
-                extracted_data = extract_notifikasi(full_text)
-            else:
-                extracted_data = {}
+    if st.button("🚀 Mulai Ekstraksi"):
+        extract_and_export(uploaded_files, doc_type, extractor_functions)
 
-            all_data.append(extracted_data)
-
-            # Rename file dan simpan ke folder sementara
-            new_file_path = rename_uploaded_file(
-                file.name, extracted_data,
-                rename_name_checkbox, rename_passport_checkbox
-            )
-            renamed_files.append(new_file_path)
-
-    # Simpan ke Excel
-    excel_path = os.path.join(temp_dir, "Hasil_Ekstraksi.xlsx")
-    pd.DataFrame(all_data).to_excel(excel_path, index=False)
-
-    # Buat ZIP dari semua file rename
-    zip_path = os.path.join(temp_dir, "Renamed_Files.zip")
-    with zipfile.ZipFile(zip_path, 'w') as zipf:
-        for file_path in renamed_files:
-            arcname = os.path.basename(file_path)
-            zipf.write(file_path, arcname=arcname)
-
-    return pd.DataFrame(all_data), excel_path, renamed_files, zip_path
-
-# ---------------------------
-# Main App Logic
-# ---------------------------
-
-# Setup UI
-st.set_page_config(page_title="PDF Extractor Streamlit", layout="wide")
-st.title("📄 Ekstraksi Dokumen PDF")
-
-with st.sidebar:
-    st.header("⚙️ Konfigurasi")
-    doc_type = st.selectbox("Jenis Dokumen", ["SKTT", "EVLN", "ITAS", "ITK", "Notifikasi"])
-    rename_by = st.multiselect("Rename file berdasarkan:", ["NAMA", "NOMOR_PASPOR"])
-
-uploaded_files = st.file_uploader("📤 Upload file PDF", type=["pdf"], accept_multiple_files=True)
-
-if uploaded_files:
-    results = []
-    zip_buffer = io.BytesIO()
-
-    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED) as zipf:
-        for file in uploaded_files:
-            text = extract_text_from_pdf(file)
-            if doc_type == "SKTT":
-                data = extract_sktt(text)
-            elif doc_type == "EVLN":
-                data = extract_evl(text)
-            elif doc_type == "ITAS":
-                data = extract_itas(text)
-            elif doc_type == "ITK":
-                data = extract_itk(text)
-            elif doc_type == "Notifikasi":
-                data = extract_notifikasi(text)
-            else:
-                data = {}
-
-            results.append(data)
-
-            # Rename file
-            name_parts = [data.get(part, "") for part in rename_by]
-            filename = "_".join(name_parts).strip() or "hasil"
-            filename = filename.replace(" ", "_")
-            filename = f"{filename}_{datetime.now().strftime('%Y%m%d')}.pdf"
-
-            file.seek(0)
-            zipf.writestr(filename, file.read())
-
-        # Simpan hasil ke Excel
-        df = pd.DataFrame(results)
-        excel_buffer = io.BytesIO()
-        df.to_excel(excel_buffer, index=False)
-        zipf.writestr("hasil_ekstraksi.xlsx", excel_buffer.getvalue())
-
-    st.success("✅ Ekstraksi selesai!")
-    st.dataframe(df)
-
-    st.download_button(
-        label="⬇️ Download Hasil ZIP",
-        data=zip_buffer.getvalue(),
-        file_name="hasil_ekstraksi.zip",
-        mime="application/zip"
-    )
-else:
-    st.info("Silakan upload file PDF untuk diproses.")
+if __name__ == "__main__":
+    main()
