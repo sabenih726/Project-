@@ -4,6 +4,7 @@ import tempfile
 import zipfile
 import base64
 import os
+import io
 from datetime import datetime
 
 # Fungsi untuk membersihkan teks
