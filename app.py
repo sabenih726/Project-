@@ -1,7 +1,8 @@
 import streamlit as st
-import re, os, shutil, tempfile, zipfile
+import re, os, shutil, zipfile
 import pandas as pd
 import pdfplumber
+import tempfile
 from datetime import datetime
 
 # === Fungsi Utility ===
@@ -29,26 +30,21 @@ def split_birth_place_date(text):
 def sanitize_filename_part(text):
     return re.sub(r'[^\w\s-]', '', text).strip()
 
-def rename_file(file_path, new_name):
-    folder = tempfile.mkdtemp()
-    new_path = os.path.join(folder, new_name)
-    shutil.copy(file_path, new_path)
-    return new_path
-
-def rename_uploaded_file(original_filename, extracted_data, use_name=True, use_passport=True):
-    name_raw = extracted_data.get("Name") or extracted_data.get("Nama TKA") or ""
-    passport_raw = (
-        extracted_data.get("Passport Number") or
-        extracted_data.get("Nomor Paspor") or
-        extracted_data.get("Passport No") or
-        extracted_data.get("KITAS/KITAP") or ""
-    )
-    name = sanitize_filename_part(name_raw) if use_name and name_raw else ""
-    passport = sanitize_filename_part(passport_raw) if use_passport and passport_raw else ""
+def rename_uploaded_file(file, extracted_data, use_name=True):
+    # Ambil nama baru dari hasil ekstraksi
+    name = extracted_data.get("Nama", "").strip().replace(" ", "_")
+    passport = extracted_data.get("No Dokumen", "").strip().replace(" ", "_")
     parts = [p for p in [name, passport] if p]
     base_name = " ".join(parts) if parts else "RENAMED"
     new_filename = f"{base_name}.pdf"
-    return rename_file(original_filename, new_filename)
+
+    # Simpan file ke temporary path dengan nama baru
+    temp_dir = tempfile.mkdtemp()
+    new_path = os.path.join(temp_dir, new_filename)
+    with open(new_path, "wb") as f:
+        f.write(file.getvalue())
+
+    return new_path
 
 def get_greeting():
     hour = datetime.now().hour
