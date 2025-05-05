@@ -4,6 +4,7 @@ import zipfile
 import io
 import base64
 import re
+import PyPDF2
 from datetime import datetime
 from PyPDF2 import PdfReader
 
