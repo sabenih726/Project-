@@ -5,7 +5,6 @@ import zipfile
 import base64
 import os
 from datetime import datetime
-from PyPDF2 import PdfReader
 
 # ---------------------------
 # UI Styling and Visual Theme
