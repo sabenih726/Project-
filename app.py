@@ -78,14 +78,34 @@ uploaded_file = st.file_uploader("Unggah file PDF", type="pdf")
 
 if uploaded_file is not None:
     with st.spinner("Membaca dan mengekstrak dokumen..."):
+        # Ekstrak teks dari PDF
         text = extract_text_from_pdf(uploaded_file)
+
+        # Tampilkan isi teks mentah untuk debugging atau review
+        st.text_area("Preview Text", text, height=400)
+
+        # Deteksi jenis dokumen
         doc_type = detect_document_type(text)
         st.subheader(f"Jenis Dokumen: {doc_type}")
+
+        # Proses ekstraksi berdasarkan jenis dokumen
         if doc_type != "Tidak dikenali":
-            extracted = extract_fields(text, doc_type)
-            st.subheader("Hasil Ekstraksi:")
-            for key, value in extracted.items():
-                st.write(f"**{key}:** {value}")
-        else:
-            st.error("Jenis dokumen tidak dikenali atau belum didukung.")
+            if doc_type == "SKTT":
+                data, renamed_file = extract_sktt(text, uploaded_file.name)
+            elif doc_type == "EVLN":
+                data, renamed_file = extract_evln(text, uploaded_file.name)
+            elif doc_type == "ITAS":
+                data, renamed_file = extract_itas(text, uploaded_file.name)
+            elif doc_type == "ITK":
+                data, renamed_file = extract_itk(text, uploaded_file.name)
+            elif doc_type == "Notifikasi":
+                data, renamed_file = extract_notifikasi(text, uploaded_file.name)
+            else:
+                st.warning("Jenis dokumen tidak dikenali.")
+                data, renamed_file = None, None
+
+            if data:
+                st.subheader("Hasil Ekstraksi:")
+                for key, value in data.items():
+                    st.write(f"**{key}:** {value}")
 
