@@ -19,8 +19,6 @@ def detect_document_type(text):
         return "EVLN"
     elif "ITAS" in text:
         return "ITAS"
-    elif "ITK" in text:
-        return "ITK"
     elif "PEMBERITAHUAN PERUBAHAN DATA" in text:
         return "Notifikasi"
     else:
