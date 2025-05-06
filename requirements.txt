@@ -1,4 +1,14 @@
-streamlit
-pandas
-PyMuPDF==1.22.5
-openpyxl
+# Core dependencies
+streamlit==1.35.0
+PyPDF2==3.0.1
+pandas==2.2.2
+openpyxl==3.1.2
+
+# Optional: Only needed if using regex heavily (standard library already has re)
+# regex
+
+# Optional: Required only if you're using zip export
+# (but zipfile is part of stdlib, so this might not be needed at all)
+
+# Optional utilities
+python-magic-bin; platform_system == "Windows"
