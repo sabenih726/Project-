@@ -1,13 +1,12 @@
 import streamlit as st
 from pdf_convert import (
-    extract_text_from_pdf,
-    detect_document_type,
-    extract_sktt,
-    extract_evln,
-    extract_itas,
-    extract_itk,
-    extract_notifikasi,
-    rename_file_and_export_excel
+    extract_evl_text,
+    extract_evl_data,
+    extract_sktt_data,
+    extract_itas_text,
+    extract_itas_data,
+    extract_notifikasi_text,
+    extract_notifikasi_data
 )
 
 st.set_page_config(page_title="Ekstraksi Dokumen Imigrasi", layout="wide")
