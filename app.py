@@ -1,17 +1,17 @@
 import streamlit as st
 from pdf_convert import (
-    extract_evl_text,
-    extract_evl_data,
-    extract_sktt_data,
-    extract_itas_text,
-    extract_itas_data,
-    extract_notifikasi_text,
-    extract_notifikasi_data
+    extract_text_from_pdf,
+    detect_document_type,
+    extract_sktt,
+    extract_evln,
+    extract_itas,
+    extract_itk,
+    extract_notifikasi,
+    rename_file_and_export_excel
 )
 
 st.set_page_config(page_title="Ekstraksi Dokumen Imigrasi", layout="wide")
-
-st.title("Ekstraksi Data dari Dokumen Imigrasi")
+st.title("📄 Ekstraksi Data dari Dokumen Imigrasi (EVLN, SKTT, ITAS, ITK, Notifikasi)")
 
 uploaded_files = st.file_uploader("Unggah file PDF", type="pdf", accept_multiple_files=True)
 
@@ -37,11 +37,11 @@ if uploaded_files:
             else:
                 data = {"Error": "Jenis dokumen tidak dikenali"}
 
+            data["filename"] = uploaded_file.name
             st.write("### Hasil Ekstraksi")
             st.json(data)
-            data["filename"] = uploaded_file.name
             all_data.append(data)
 
     if all_data:
         zip_buffer = rename_file_and_export_excel(all_data)
-        st.download_button("Unduh Hasil (ZIP)", zip_buffer, file_name="hasil_ekstraksi.zip")
+        st.download_button("⬇️ Unduh Hasil (ZIP)", zip_buffer, file_name="hasil_ekstraksi.zip")
