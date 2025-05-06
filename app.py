@@ -10,6 +10,186 @@ from datetime import datetime
 import io
 import base64
 
+# Konfigurasi CSS untuk meniru Tailwind CSS
+def load_css():
+    # CSS yang terinspirasi dari Tailwind
+    st.markdown("""
+    <style>
+        /* Meniru warna dan tampilan Tailwind */
+        :root {
+            --primary: #38bdf8;
+            --primary-dark: #0284c7;
+            --secondary: #f97316;
+            --accent: #4ade80;
+            --warning: #facc15;
+            --danger: #f43f5e;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray: #64748b;
+        }
+        
+        /* Container styling */
+        .container {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        }
+        
+        /* Card styling */
+        .card {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        }
+        
+        /* Header styling */
+        .header {
+            background: linear-gradient(90deg, #0ea5e9, #0284c7);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Alert styling */
+        .alert-warning {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            color: #92400e;
+        }
+        
+        .alert-info {
+            background-color: #e0f2fe;
+            border-left: 4px solid #0284c7;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            color: #0369a1;
+        }
+        
+        .alert-success {
+            background-color: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            color: #047857;
+        }
+        
+        /* Badge styling */
+        .badge {
+            background-color: #e0f2fe;
+            color: #0284c7;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        
+        /* Button styling */
+        .stButton > button {
+            border-radius: 0.375rem !important;
+            font-weight: 600 !important;
+            padding: 0.5rem 1rem !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary) !important;
+            color: white !important;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark) !important;
+        }
+        
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 700 !important;
+            margin-bottom: 1rem !important;
+        }
+        
+        p {
+            font-family: 'Inter', sans-serif !important;
+            line-height: 1.5 !important;
+        }
+        
+        /* Custom sidebar header */
+        .sidebar-header {
+            padding: 1rem;
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        /* Custom upload area */
+        .uploadfile {
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            text-align: center;
+            background-color: #f8fafc;
+            transition: all 0.3s ease;
+        }
+        
+        .uploadfile:hover {
+            border-color: #0ea5e9;
+            background-color: #e0f2fe;
+        }
+        
+        /* Custom divider */
+        .divider {
+            height: 1px;
+            background-color: #e2e8f0;
+            margin: 1.5rem 0;
+        }
+        
+        /* Modified DataFrames */
+        .dataframe {
+            border-radius: 0.5rem !important;
+            overflow: hidden !important;
+        }
+        
+        .dataframe th {
+            background-color: #f1f5f9 !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Tab styling */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 8px;
+        }
+
+        .stTabs [data-baseweb="tab"] {
+            height: 50px;
+            white-space: pre-wrap;
+            background-color: #f1f5f9;
+            border-radius: 4px 4px 0px 0px;
+            gap: 1px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        .stTabs [aria-selected="true"] {
+            background-color: #0ea5e9 !important;
+            color: white !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
 # Fungsi untuk membersihkan teks
 def clean_text(text, is_name_or_pob=False):
     text = re.sub(r"Reference No|Payment Receipt No|Jenis Kelamin|Kewarganegaraan|Pekerjaan|Alamat", "", text)
@@ -344,91 +524,264 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Muat CSS kustom yang terinspirasi dari Tailwind
+load_css()
+
 # Sisi kiri - sidebar
 with st.sidebar:
+    st.markdown('<div class="sidebar-header">PT LAMAN DAVINDO BAHMAN</div>', unsafe_allow_html=True)
     st.image("https://via.placeholder.com/150x50?text=LDB", width=150)
-    st.title("Menu")
-    st.info(f"{get_greeting()}, PT Laman Davindo Bahman")
     
-    st.warning("⚠️ Mohon Bayar Tagihan")
+    st.markdown(f'<p style="font-weight: 600; font-size: 1.2rem;">{get_greeting()}</p>', unsafe_allow_html=True)
+    
+    st.markdown('<div class="alert-warning">⚠️ Mohon Bayar Tagihan</div>', unsafe_allow_html=True)
     st.button("Transfer", type="primary")
     
-    st.divider()
+    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+    
+    with st.expander("📋 Menu Utama"):
+        st.markdown("- 🏠 Beranda")
+        st.markdown("- 📄 Dokumen")
+        st.markdown("- 👥 Klien")
+        st.markdown("- ⚙️ Pengaturan")
+    
     st.caption("© 2025 PT Laman Davindo Bahman")
 
 # Header utama
-st.title("Ekstraksi Dokumen Imigrasi")
-st.write("Upload file PDF dan sistem akan mengekstrak data secara otomatis")
+st.markdown('<div class="header"><h1 style="margin-bottom: 0.5rem;">📑 Ekstraksi Dokumen Imigrasi</h1><p style="opacity: 0.8;">Upload file PDF dan sistem akan mengekstrak data secara otomatis</p></div>', unsafe_allow_html=True)
 
 # Kolom untuk input
-with st.container():
-    st.subheader("Upload Dokumen")
+st.markdown('<div class="container">', unsafe_allow_html=True)
+st.markdown('<h2>Upload Dokumen</h2>', unsafe_allow_html=True)
+
+col1, col2 = st.columns(2)
+with col1:
+    st.markdown('<div class="uploadfile">', unsafe_allow_html=True)
+    uploaded_files = st.file_uploader("Upload File PDF", type=["pdf"], accept_multiple_files=True)
+    if not uploaded_files:
+        st.markdown('<p style="color: #64748b; margin-top: 10px;">Tarik file PDF ke sini atau klik untuk memilih</p>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with col2:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    doc_type = st.selectbox(
+        "Pilih Jenis Dokumen",
+        ["SKTT", "EVLN", "ITAS", "ITK", "Notifikasi"]
+    )
     
-    col1, col2 = st.columns(2)
-    with col1:
-        uploaded_files = st.file_uploader("Upload File PDF", type=["pdf"], accept_multiple_files=True)
+    st.markdown('<div style="margin-top: 1rem;">', unsafe_allow_html=True)
+    use_name = st.checkbox("Gunakan Nama untuk Rename File", value=True)
+    use_passport = st.checkbox("Gunakan Nomor Paspor untuk Rename File", value=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     
-    with col2:
-        doc_type = st.selectbox(
-            "Pilih Jenis Dokumen",
-            ["SKTT", "EVLN", "ITAS", "ITK", "Notifikasi"]
-        )
+    # Display badge untuk jenis dokumen
+    if doc_type:
+        badge_color = {
+            "SKTT": "#0284c7",
+            "EVLN": "#7c3aed",
+            "ITAS": "#16a34a",
+            "ITK": "#ca8a04",
+            "Notifikasi": "#e11d48"
+        }.get(doc_type, "#64748b")
         
-        use_name = st.checkbox("Gunakan Nama untuk Rename File", value=True)
-        use_passport = st.checkbox("Gunakan Nomor Paspor untuk Rename File", value=True)
+        st.markdown(f'''
+        <div style="margin-top: 1rem;">
+            <span style="background-color: {badge_color}; color: white; padding: 0.3rem 0.6rem; 
+            border-radius: 0.25rem; font-size: 0.8rem; font-weight: 600;">
+                {doc_type}
+            </span>
+            <span style="font-size: 0.85rem; margin-left: 0.5rem; color: #64748b;">Terpilih</span>
+        </div>
+        ''', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 # Tombol proses
 if uploaded_files:
-    process_button = st.button("Proses PDF", type="primary", use_container_width=True)
+    st.markdown('<div class="container">', unsafe_allow_html=True)
+    
+    # Panel informasi file
+    st.markdown('<h3>File yang Diupload</h3>', unsafe_allow_html=True)
+    file_info_cols = st.columns(len(uploaded_files) if len(uploaded_files) <= 3 else 3)
+    
+    for i, uploaded_file in enumerate(uploaded_files):
+        col_idx = i % 3
+        with file_info_cols[col_idx]:
+            st.markdown(f'''
+            <div style="background-color: #f8fafc; border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem;">
+                <div style="display: flex; align-items: center;">
+                    <div style="background-color: #e2e8f0; border-radius: 0.375rem; padding: 0.5rem; margin-right: 0.75rem;">
+                        📄
+                    </div>
+                    <div>
+                        <p style="margin: 0; font-weight: 600; font-size: 0.9rem;">{uploaded_file.name}</p>
+                        <p style="margin: 0; color: #64748b; font-size: 0.8rem;">PDF Document</p>
+                    </div>
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+    
+    # Tombol proses dengan style Tailwind-like
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        process_button = st.button(
+            f"Proses {len(uploaded_files)} File PDF", 
+            type="primary", 
+            use_container_width=True,
+            key="process_button"
+        )
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     if process_button:
-        with st.spinner("Sedang memproses dokumen..."):
-            df, excel_path, renamed_files, zip_path, temp_dir = process_pdfs(
-                uploaded_files, doc_type, use_name, use_passport
-            )
+        # Tambahkan progress bar yang lebih menarik
+        progress_placeholder = st.empty()
+        progress_placeholder.markdown('''
+        <div style="background-color: #f1f5f9; border-radius: 0.5rem; padding: 1.5rem; text-align: center;">
+            <div style="margin-bottom: 1rem;">
+                <img src="https://via.placeholder.com/50x50?text=⚙️" width="50" height="50" style="margin: 0 auto;">
+            </div>
+            <h3 style="margin-bottom: 0.5rem;">Memproses Dokumen</h3>
+            <p style="color: #64748b;">Mohon tunggu sebentar sementara kami mengekstrak informasi dari dokumen Anda...</p>
+            <div style="margin-top: 1rem; height: 0.5rem; background-color: #e2e8f0; border-radius: 1rem; overflow: hidden;">
+                <div style="width: 75%; height: 100%; background: linear-gradient(90deg, #0ea5e9, #3b82f6); border-radius: 1rem; animation: progress 2s infinite;"></div>
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        # Proses file
+        df, excel_path, renamed_files, zip_path, temp_dir = process_pdfs(
+            uploaded_files, doc_type, use_name, use_passport
+        )
+        
+        # Hapus placeholder progress
+        progress_placeholder.empty()
+        
+        # Tampilkan hasil dalam tab dengan styling yang lebih baik
+        st.markdown('<div class="container">', unsafe_allow_html=True)
+        st.markdown('''
+        <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+            <div style="background-color: #d1fae5; color: #047857; border-radius: 50%; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; margin-right: 0.75rem;">
+                ✓
+            </div>
+            <h2 style="margin: 0;">Proses Berhasil</h2>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        tab1, tab2, tab3 = st.tabs(["💾 Hasil Ekstraksi", "📊 File Excel", "📁 File Rename"])
+        
+        with tab1:
+            st.subheader("Data Hasil Ekstraksi")
+            st.markdown('<div style="overflow-x: auto;">', unsafe_allow_html=True)
+            st.dataframe(df, use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
             
-            # Tampilkan hasil dalam tab
-            tab1, tab2, tab3 = st.tabs(["Hasil Ekstraksi", "File Excel", "File Rename"])
+            # Tambahkan ringkasan data
+            st.markdown(f'''
+            <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
+                <div style="background-color: #f0f9ff; border-radius: 0.5rem; padding: 1rem; flex: 1;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #0369a1;">Total Data</h4>
+                    <p style="font-size: 1.5rem; font-weight: 600; margin: 0;">{len(df)}</p>
+                </div>
+                <div style="background-color: #f0fdf4; border-radius: 0.5rem; padding: 1rem; flex: 1;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #166534;">Jenis Dokumen</h4>
+                    <p style="font-size: 1.5rem; font-weight: 600; margin: 0;">{doc_type}</p>
+                </div>
+                <div style="background-color: #fef3c7; border-radius: 0.5rem; padding: 1rem; flex: 1;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">File Diproses</h4>
+                    <p style="font-size: 1.5rem; font-weight: 600; margin: 0;">{len(uploaded_files)}</p>
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+        
+        with tab2:
+            st.subheader("Download File Excel")
             
-            with tab1:
-                st.subheader("Data Hasil Ekstraksi")
-                st.dataframe(df, use_container_width=True)
+            with open(excel_path, "rb") as f:
+                excel_data = f.read()
             
-            with tab2:
-                st.subheader("Download Excel")
-                with open(excel_path, "rb") as f:
-                    excel_data = f.read()
+            # Tampilan download lebih menarik
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                st.markdown('''
+                <div style="background-color: #f8fafc; border-radius: 0.5rem; padding: 1rem; display: flex; align-items: center;">
+                    <div style="background-color: #22c55e; border-radius: 0.5rem; padding: 0.75rem; margin-right: 1rem;">
+                        <span style="color: white; font-size: 1.5rem;">📊</span>
+                    </div>
+                    <div>
+                        <p style="margin: 0; font-weight: 600;">Hasil_Ekstraksi.xlsx</p>
+                        <p style="margin: 0; color: #64748b; font-size: 0.85rem;">Excel Spreadsheet • Diekspor pada {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+                    </div>
+                </div>
+                ''', unsafe_allow_html=True)
+            
+            with col2:
                 st.download_button(
-                    label="Download Excel Hasil Ekstraksi",
+                    label="Download Excel",
                     data=excel_data,
                     file_name="Hasil_Ekstraksi.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
                 )
+        
+        with tab3:
+            st.subheader("File yang Telah di-Rename")
             
-            with tab3:
-                st.subheader("File yang Telah di-Rename")
-                
-                # Tampilkan daftar file
-                for original_name, file_info in renamed_files.items():
-                    st.write(f"**{original_name}** → **{file_info['new_name']}**")
-                
-                # Tombol download ZIP
-                with open(zip_path, "rb") as f:
-                    zip_data = f.read()
-                st.download_button(
-                    label="Download Semua File Rename (ZIP)",
-                    data=zip_data,
-                    file_name="Renamed_Files.zip",
-                    mime="application/zip"
-                )
+            # Tampilkan daftar file dengan UI yang lebih baik
+            st.markdown('<div style="background-color: #f8fafc; border-radius: 0.5rem; padding: 1rem;">', unsafe_allow_html=True)
             
-            # Hapus folder sementara setelah selesai
-            shutil.rmtree(temp_dir)
+            for original_name, file_info in renamed_files.items():
+                st.markdown(f'''
+                <div style="display: flex; align-items: center; padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">
+                    <div style="flex: 1;">
+                        <p style="margin: 0; color: #64748b; font-size: 0.85rem;">Nama Asli:</p>
+                        <p style="margin: 0; font-weight: 600;">{original_name}</p>
+                    </div>
+                    <div style="margin: 0 1rem;">
+                        <span style="color: #64748b;">→</span>
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin: 0; color: #64748b; font-size: 0.85rem;">Nama Baru:</p>
+                        <p style="margin: 0; font-weight: 600; color: #0369a1;">{file_info['new_name']}</p>
+                    </div>
+                </div>
+                ''', unsafe_allow_html=True)
             
-            st.success("Proses ekstraksi berhasil!")
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Tombol download ZIP
+            with open(zip_path, "rb") as f:
+                zip_data = f.read()
+            
+            st.markdown('<div style="margin-top: 1rem;">', unsafe_allow_html=True)
+            st.download_button(
+                label="Download Semua File PDF (ZIP)",
+                data=zip_data,
+                file_name="Renamed_Files.zip",
+                mime="application/zip",
+                use_container_width=True
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Hapus folder sementara setelah selesai
+        shutil.rmtree(temp_dir)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
 else:
-    st.info("Silakan upload file PDF untuk memulai.")
-
+    st.markdown('''
+    <div class="alert-info">
+        <h3 style="margin-top: 0;">Mulai Ekstraksi</h3>
+        <p>Silakan upload file PDF dokumen imigrasi untuk memulai proses ekstraksi otomatis.</p>
+        <ul style="margin-bottom: 0;">
+            <li>Pastikan file dalam format PDF</li>
+            <li>Pilih jenis dokumen yang sesuai</li>
+            <li>Sesuaikan opsi penamaan file jika diperlukan</li>
+        </ul>
+    </div>
+    ''', unsafe_allow_html=True)
+    
 # Tambahkan informasi bantuan
 with st.expander("Bantuan"):
     st.write("""
