@@ -1,118 +1,48 @@
 import streamlit as st
-import fitz  # PyMuPDF
-import re
+from pdf_convert import (
+    extract_text_from_pdf,
+    detect_document_type,
+    extract_sktt,
+    extract_evln,
+    extract_itas,
+    extract_itk,
+    extract_notifikasi,
+    rename_file_and_export_excel
+)
 
-# Fungsi untuk membaca teks dari PDF
-def extract_text_from_pdf(file):
-    doc = fitz.open(stream=file.read(), filetype="pdf")
-    text = ""
-    for page in doc:
-        text += page.get_text()
-    return text
+st.set_page_config(page_title="Ekstraksi Dokumen Imigrasi", layout="wide")
 
-# Fungsi deteksi jenis dokumen
-def detect_document_type(text):
-    if "Nomor B.3" in text and "Nama TKA" in text:
-        return "Notifikasi"
-    elif "PERMIT NUMBER" in text and "STAY PERMIT EXPIRY" in text:
-        return "ITAS"
-    elif "NIK" in text and "Nama" in text and "KITAP" in text:
-        return "SKTT"
-    elif "Passport No" in text and "Place of Birth" in text:
-        return "EVLN"
-    else:
-        return "Tidak dikenali"
-
-# Fungsi ekstraksi berdasarkan tipe dokumen
-def extract_fields(text, doc_type):
-    data = {}
-    if doc_type == "EVLN":
-        data["Name"] = re.search(r"Name\s*[:\-]?\s*(.*)", text)
-        data["Place of Birth"] = re.search(r"Place of Birth\s*[:\-]?\s*(.*)", text)
-        data["Date of Birth"] = re.search(r"Date of Birth\s*[:\-]?\s*(.*)", text)
-        data["Passport No"] = re.search(r"Passport No\s*[:\-]?\s*(.*)", text)
-        data["Passport Expiry"] = re.search(r"Passport Expiry\s*[:\-]?\s*(.*)", text)
-        data["Date"] = re.search(r"Date\s*[:\-]?\s*(.*)", text)
-    elif doc_type == "SKTT":
-        data["NIK"] = re.search(r"NIK.*?:\s*(.*)", text)
-        data["Nama"] = re.search(r"Nama.*?:\s*(.*)", text)
-        data["Tempat/Tgl Lahir"] = re.search(r"Tempat/Tgl Lahir.*?:\s*(.*)", text)
-        data["Kewarganegaraan"] = re.search(r"Kewarganegaraan.*?:\s*(.*)", text)
-        data["Alamat"] = re.search(r"Alamat.*?:\s*(.*)", text)
-        data["Nomor KITAP/KITAS"] = re.search(r"Nomor KITAP.*?:\s*(.*)", text)
-        data["Berlaku Hingga"] = re.search(r"Berlaku Hingga.*?:\s*(.*)", text)
-    elif doc_type == "ITAS":
-        lines = text.strip().splitlines()
-        data["Name"] = lines[0].strip() if lines else "-"
-
-        def extract(pattern, default="-"):
-            match = re.search(pattern, text, re.IGNORECASE)
-            return match.group(1).strip() if match else default
-
-        data["PERMIT NUMBER"] = extract(r'PERMIT NUMBER\s*:\s*(.*)')
-        data["STAY PERMIT EXPIRY"] = extract(r'STAY PERMIT EXPIRY\s*:\s*(.*)')
-        data["Place / Date of Birth"] = extract(r'Place\s*/\s*Date of Birth.*?:\s*(.*)')
-        data["Passport Number"] = extract(r'Passport Number.*?:\s*(.*)')
-        data["Passport Expiry"] = extract(r'Passport Expiry.*?:\s*(.*)')
-        data["Nationality"] = extract(r'Nationality.*?:\s*(.*)')
-        data["Gender"] = extract(r'Gender.*?:\s*(.*)')
-        data["Address"] = extract(r'Address.*?:\s*(.*)')
-        data["Occupation"] = extract(r'Occupation.*?:\s*(.*)')
-        data["Guarantor"] = extract(r'Guarantor.*?:\s*(.*)')
-    elif doc_type == "Notifikasi":
-        data["Nomor"] = re.search(r"(NOMOR.*?)\n", text)
-        data["Nama TKA"] = re.search(r"Nama TKA\s*[:\-]?\s*(.*)", text)
-        data["Tempat/Tanggal Lahir"] = re.search(r"Tempat/Tanggal Lahir\s*[:\-]?\s*(.*)", text)
-        data["Kewarganegaraan"] = re.search(r"Kewarganegaraan\s*[:\-]?\s*(.*)", text)
-        data["Alamat Tempat Tinggal"] = re.search(r"Alamat Tempat Tinggal\s*[:\-]?\s*(.*)", text)
-        data["Nomor Paspor"] = re.search(r"Nomor Paspor\s*[:\-]?\s*(.*)", text)
-        data["Jabatan"] = re.search(r"Jabatan\s*[:\-]?\s*(.*)", text)
-        data["Lokasi kerja"] = re.search(r"Lokasi kerja\s*[:\-]?\s*(.*)", text)
-        data["Berlaku"] = re.search(r"Berlaku\s*[:\-]?\s*(.*)", text)
-
-    # Bersihkan hasil regex
-    for key in data:
-        if data[key]:
-            data[key] = data[key].group(1).strip()
-        else:
-            data[key] = "-"
-    return data
-
-# UI Streamlit
 st.title("Ekstraksi Data dari Dokumen Imigrasi")
 
-uploaded_file = st.file_uploader("Unggah file PDF", type="pdf")
+uploaded_files = st.file_uploader("Unggah file PDF", type="pdf", accept_multiple_files=True)
 
-if uploaded_file is not None:
-    with st.spinner("Membaca dan mengekstrak dokumen..."):
-        # Ekstrak teks dari PDF
-        text = extract_text_from_pdf(uploaded_file)
+if uploaded_files:
+    all_data = []
+    for uploaded_file in uploaded_files:
+        with st.spinner(f"Mengekstrak: {uploaded_file.name}"):
+            text = extract_text_from_pdf(uploaded_file)
+            doc_type = detect_document_type(text)
+            st.write(f"**Jenis Dokumen:** {doc_type}")
+            st.text_area("Isi Dokumen", text, height=250)
 
-        # Tampilkan isi teks mentah untuk debugging atau review
-        st.text_area("Preview Text", text, height=400)
-
-        # Deteksi jenis dokumen
-        doc_type = detect_document_type(text)
-        st.subheader(f"Jenis Dokumen: {doc_type}")
-
-        # Proses ekstraksi berdasarkan jenis dokumen
-        if doc_type != "Tidak dikenali":
             if doc_type == "SKTT":
-                data, renamed_file = extract_sktt(text, uploaded_file.name)
+                data = extract_sktt(text)
             elif doc_type == "EVLN":
-                data, renamed_file = extract_evln(text, uploaded_file.name)
+                data = extract_evln(text)
             elif doc_type == "ITAS":
-                data, renamed_file = extract_itas(text, uploaded_file.name)
+                data = extract_itas(text)
             elif doc_type == "ITK":
-                data, renamed_file = extract_itk(text, uploaded_file.name)
+                data = extract_itk(text)
             elif doc_type == "Notifikasi":
-                data, renamed_file = extract_notifikasi(text, uploaded_file.name)
+                data = extract_notifikasi(text)
             else:
-                st.warning("Jenis dokumen tidak dikenali.")
-                data, renamed_file = None, None
+                data = {"Error": "Jenis dokumen tidak dikenali"}
 
-            if data:
-                st.subheader("Hasil Ekstraksi:")
-                for key, value in data.items():
-                    st.write(f"**{key}:** {value}")
+            st.write("### Hasil Ekstraksi")
+            st.json(data)
+            data["filename"] = uploaded_file.name
+            all_data.append(data)
 
+    if all_data:
+        zip_buffer = rename_file_and_export_excel(all_data)
+        st.download_button("Unduh Hasil (ZIP)", zip_buffer, file_name="hasil_ekstraksi.zip")
