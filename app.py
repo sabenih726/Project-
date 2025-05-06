@@ -517,13 +517,12 @@ def main():
 
         # Tombol proses
         if uploaded_files:
-            # ... (Bagian tombol proses dan pemrosesan file sama seperti di aplikasi asli Anda) ...
             st.markdown('<div class="container">', unsafe_allow_html=True)
-            
+    
             # Panel informasi file
             st.markdown('<h3>File yang Diupload</h3>', unsafe_allow_html=True)
             file_info_cols = st.columns(len(uploaded_files) if len(uploaded_files) <= 3 else 3)
-            
+    
             for i, uploaded_file in enumerate(uploaded_files):
                 col_idx = i % 3
                 with file_info_cols[col_idx]:
@@ -540,20 +539,153 @@ def main():
                         </div>
                     </div>
                     ''', unsafe_allow_html=True)
-            
+    
             # Tombol proses dengan style Tailwind-like
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
-                process_button = st.button(
+                    process_button = st.button(
                     f"Proses {len(uploaded_files)} File PDF", 
                     type="primary", 
                     use_container_width=True,
                     key="process_button"
                 )
-            
+    
             st.markdown('</div>', unsafe_allow_html=True)
+    
+            if process_button:
+                # Tambahkan progress bar yang lebih menarik
+                progress_placeholder = st.empty()
+                progress_placeholder.markdown('''
+                <div style="background-color: #f1f5f9; border-radius: 0.5rem; padding: 1.5rem; text-align: center;">
+                    <div style="margin-bottom: 1rem;">
+                        <img src="https://via.placeholder.com/50x50?text=⚙️" width="50" height="50" style="margin: 0 auto;">
+                    </div>
+                    <h3 style="margin-bottom: 0.5rem;">Memproses Dokumen</h3>
+                    <p style="color: #64748b;">Mohon tunggu sebentar sementara kami mengekstrak informasi dari dokumen Anda...</p>
+                    <div style="margin-top: 1rem; height: 0.5rem; background-color: #e2e8f0; border-radius: 1rem; overflow: hidden;">
+                        <div style="width: 75%; height: 100%; background: linear-gradient(90deg, #0ea5e9, #3b82f6); border-radius: 1rem; animation: progress 2s infinite;"></div>
+                    </div>
+                </div>
+                ''', unsafe_allow_html=True)
+        
+                # Proses file
+                df, excel_path, renamed_files, zip_path, temp_dir = process_pdfs(
+                    uploaded_files, doc_type, use_name, use_passport
+                )
+        
+                # Hapus placeholder progress
+                progress_placeholder.empty()
+        
+                # Tampilkan hasil dalam tab dengan styling yang lebih baik
+                st.markdown('<div class="container">', unsafe_allow_html=True)
+                st.markdown('''
+                <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                    <div style="background-color: #d1fae5; color: #047857; border-radius: 50%; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; margin-right: 0.75rem;">
+                        ✓
+                    </div>
+                    <h2 style="margin: 0;">Proses Berhasil</h2>
+                </div>
+                ''', unsafe_allow_html=True)
+        
+                tab1, tab2, tab3 = st.tabs(["💾 Hasil Ekstraksi", "📊 File Excel", "📁 File Rename"])
+        
+                with tab1:
+                    st.subheader("Data Hasil Ekstraksi")
+                    st.markdown('<div style="overflow-x: auto;">', unsafe_allow_html=True)
+                    st.dataframe(df, use_container_width=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
             
-            # ... (Bagian pemrosesan file setelah tombol ditekan sama seperti di aplikasi asli Anda) ...
+                    # Tambahkan ringkasan data
+                    st.markdown(f'''
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
+                        <div style="background-color: #f0f9ff; border-radius: 0.5rem; padding: 1rem; flex: 1;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #0369a1;">Total Data</h4>
+                            <p style="font-size: 1.5rem; font-weight: 600; margin: 0;">{len(df)}</p>
+                        </div>
+                        <div style="background-color: #f0fdf4; border-radius: 0.5rem; padding: 1rem; flex: 1;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #166534;">Jenis Dokumen</h4>
+                            <p style="font-size: 1.5rem; font-weight: 600; margin: 0;">{doc_type}</p>
+                        </div>
+                        <div style="background-color: #fef3c7; border-radius: 0.5rem; padding: 1rem; flex: 1;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">File Diproses</h4>
+                            <p style="font-size: 1.5rem; font-weight: 600; margin: 0;">{len(uploaded_files)}</p>
+                        </div>
+                    </div>
+                    ''', unsafe_allow_html=True)
+        
+                with tab2:
+                    st.subheader("Download File Excel")
+            
+                    with open(excel_path, "rb") as f:
+                        excel_data = f.read()
+            
+                    # Tampilan download lebih menarik
+                    col1, col2 = st.columns([2, 1])
+                    with col1:
+                        st.markdown('''
+                        <div style="background-color: #f8fafc; border-radius: 0.5rem; padding: 1rem; display: flex; align-items: center;">
+                            <div style="background-color: #22c55e; border-radius: 0.5rem; padding: 0.75rem; margin-right: 1rem;">
+                                <span style="color: white; font-size: 1.5rem;">📊</span>
+                            </div>
+                            <div>
+                                <p style="margin: 0; font-weight: 600;">Hasil_Ekstraksi.xlsx</p>
+                                <p style="margin: 0; color: #64748b; font-size: 0.85rem;">Excel Spreadsheet • Diekspor pada {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+                            </div>
+                        </div>
+                        ''', unsafe_allow_html=True)
+            
+                    with col2:
+                        st.download_button(
+                            label="Download Excel",
+                            data=excel_data,
+                            file_name="Hasil_Ekstraksi.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            use_container_width=True
+                        )
+        
+                with tab3:
+                    st.subheader("File yang Telah di-Rename")
+            
+                    # Tampilkan daftar file dengan UI yang lebih baik
+                    st.markdown('<div style="background-color: #f8fafc; border-radius: 0.5rem; padding: 1rem;">', unsafe_allow_html=True)
+            
+                    for original_name, file_info in renamed_files.items():
+                        st.markdown(f'''
+                        <div style="display: flex; align-items: center; padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">
+                            <div style="flex: 1;">
+                                <p style="margin: 0; color: #64748b; font-size: 0.85rem;">Nama Asli:</p>
+                                <p style="margin: 0; font-weight: 600;">{original_name}</p>
+                            </div>
+                            <div style="margin: 0 1rem;">
+                                <span style="color: #64748b;">→</span>
+                            </div>
+                            <div style="flex: 1;">
+                                <p style="margin: 0; color: #64748b; font-size: 0.85rem;">Nama Baru:</p>
+                                <p style="margin: 0; font-weight: 600; color: #0369a1;">{file_info['new_name']}</p>
+                            </div>
+                        </div>
+                        ''', unsafe_allow_html=True)
+            
+                    st.markdown('</div>', unsafe_allow_html=True)
+            
+                    # Tombol download ZIP
+                    with open(zip_path, "rb") as f:
+                        zip_data = f.read()
+            
+                    st.markdown('<div style="margin-top: 1rem;">', unsafe_allow_html=True)
+                    st.download_button(
+                        label="Download Semua File PDF (ZIP)",
+                        data=zip_data,
+                        file_name="Renamed_Files.zip",
+                        mime="application/zip",
+                        use_container_width=True
+                    )
+                    st.markdown('</div>', unsafe_allow_html=True)
+        
+                # Hapus folder sementara setelah selesai
+                shutil.rmtree(temp_dir)
+                
+                st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.markdown('''
             <div class="alert-info">
@@ -566,7 +698,7 @@ def main():
                 </ul>
             </div>
             ''', unsafe_allow_html=True)
-            
+     
         # Tambahkan informasi bantuan
         with st.expander("Bantuan"):
             st.write("""
