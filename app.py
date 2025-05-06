@@ -5,7 +5,6 @@ from pdf_convert import (
     extract_sktt,
     extract_evln,
     extract_itas,
-    extract_itk,
     extract_notifikasi,
     rename_file_and_export_excel
 )
@@ -30,8 +29,6 @@ if uploaded_files:
                 data = extract_evln(text)
             elif doc_type == "ITAS":
                 data = extract_itas(text)
-            elif doc_type == "ITK":
-                data = extract_itk(text)
             elif doc_type == "Notifikasi":
                 data = extract_notifikasi(text)
             else:
