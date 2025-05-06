@@ -21,9 +21,9 @@ def check_credentials(username, password):
     # Dalam implementasi nyata, gunakan database atau file yang lebih aman
     # Ini hanya contoh sederhana
     users = {
-        "admin": hash_password("admin123"),
-        "petugas": hash_password("petugas123"),
-        "manager": hash_password("manager123")
+        "sinta": hash_password("sinta123"),
+        "ainun": hash_password("ainun123"),
+        "fatih": hash_password("fatih123")
     }
     
     hashed_pw = hash_password(password)
@@ -444,7 +444,7 @@ def main():
         with st.sidebar:
             st.markdown('<div class="sidebar-header">PT LAMAN DAVINDO BAHMAN</div>', unsafe_allow_html=True)
                         
-            st.markdown(f'<p style="font-weight: 600; font-size: 1.2rem;">{get_greeting()}, {st.session_state.username}!</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="font-weight: 600; font-size: 1.2rem;">{get_greeting()}</p>', unsafe_allow_html=True)
             
             st.markdown('<div class="alert-warning">⚠️ Mohon Bayar Tagihan</div>', unsafe_allow_html=True)
             st.button("Transfer", type="primary")
