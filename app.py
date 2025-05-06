@@ -157,8 +157,7 @@ def main():
         # Sisi kiri - sidebar
         with st.sidebar:
             st.markdown('<div class="sidebar-header">PT LAMAN DAVINDO BAHMAN</div>', unsafe_allow_html=True)
-            st.image("https://via.placeholder.com/150x50?text=LDB", width=150)
-            
+                        
             st.markdown(f'<p style="font-weight: 600; font-size: 1.2rem;">{get_greeting()}, {st.session_state.username}!</p>', unsafe_allow_html=True)
             
             st.markdown('<div class="alert-warning">⚠️ Mohon Bayar Tagihan</div>', unsafe_allow_html=True)
