@@ -42,16 +42,23 @@ def extract_fields(text, doc_type):
         data["Nomor KITAP/KITAS"] = re.search(r"Nomor KITAP.*?:\s*(.*)", text)
         data["Berlaku Hingga"] = re.search(r"Berlaku Hingga.*?:\s*(.*)", text)
     elif doc_type == "ITAS":
-        data["Name"] = re.search(r"Name\s*[:\-]?\s*(.*)", text)
-        data["PERMIT NUMBER"] = re.search(r"PERMIT NUMBER\s*[:\-]?\s*(.*)", text)
-        data["STAY PERMIT EXPIRY"] = re.search(r"STAY PERMIT EXPIRY\s*[:\-]?\s*(.*)", text)
-        data["Place / Date of Birth"] = re.search(r"Place / Date of Birth\s*[:\-]?\s*(.*)", text)
-        data["Passport Number"] = re.search(r"Passport Number\s*[:\-]?\s*(.*)", text)
-        data["Passport Expiry"] = re.search(r"Passport Expiry\s*[:\-]?\s*(.*)", text)
-        data["Nationality"] = re.search(r"Nationality\s*[:\-]?\s*(.*)", text)
-        data["Address"] = re.search(r"Address\s*[:\-]?\s*(.*)", text)
-        data["Occupation"] = re.search(r"Occupation\s*[:\-]?\s*(.*)", text)
-        data["Guarantor"] = re.search(r"Guarantor\s*[:\-]?\s*(.*)", text)
+        lines = text.strip().splitlines()
+        data["Name"] = lines[0].strip() if lines else "-"
+
+        def extract(pattern, default="-"):
+            match = re.search(pattern, text, re.IGNORECASE)
+            return match.group(1).strip() if match else default
+
+        data["PERMIT NUMBER"] = extract(r'PERMIT NUMBER\s*:\s*(.*)')
+        data["STAY PERMIT EXPIRY"] = extract(r'STAY PERMIT EXPIRY\s*:\s*(.*)')
+        data["Place / Date of Birth"] = extract(r'Place\s*/\s*Date of Birth.*?:\s*(.*)')
+        data["Passport Number"] = extract(r'Passport Number.*?:\s*(.*)')
+        data["Passport Expiry"] = extract(r'Passport Expiry.*?:\s*(.*)')
+        data["Nationality"] = extract(r'Nationality.*?:\s*(.*)')
+        data["Gender"] = extract(r'Gender.*?:\s*(.*)')
+        data["Address"] = extract(r'Address.*?:\s*(.*)')
+        data["Occupation"] = extract(r'Occupation.*?:\s*(.*)')
+        data["Guarantor"] = extract(r'Guarantor.*?:\s*(.*)')
     elif doc_type == "Notifikasi":
         data["Nomor"] = re.search(r"(NOMOR.*?)\n", text)
         data["Nama TKA"] = re.search(r"Nama TKA\s*[:\-]?\s*(.*)", text)
