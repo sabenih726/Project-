@@ -1,5 +1,5 @@
 import streamlit as st
-import fitz  # PyMuPDF
+import pymupdf  # PyMuPDF
 import re
 
 # Fungsi untuk membaca teks dari PDF
