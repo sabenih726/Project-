@@ -1,5 +1,4 @@
 streamlit
 pandas
+PyMuPDF==1.22.5
 openpyxl
-PyMuPDF==1.22.3
-PyPDF2
