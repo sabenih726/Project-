@@ -1,8 +1,30 @@
-import streamlit as st
-import pdfplumber
-import pandas as pd
 import re
+import fitz  # PyMuPDF
+import pandas as pd
 from io import BytesIO
+from zipfile import ZipFile
+
+# Fungsi umum
+def extract_text_from_pdf(file):
+    with fitz.open(stream=file.read(), filetype="pdf") as doc:
+        text = ""
+        for page in doc:
+            text += page.get_text()
+    return text
+
+def detect_document_type(text):
+    if "SURAT KETERANGAN TEMPAT TINGGAL" in text:
+        return "SKTT"
+    elif "E-Visa" in text:
+        return "EVLN"
+    elif "ITAS" in text:
+        return "ITAS"
+    elif "ITK" in text:
+        return "ITK"
+    elif "PEMBERITAHUAN PERUBAHAN DATA" in text:
+        return "Notifikasi"
+    else:
+        return "Tidak Diketahui"
 
 # ========================== FUNGSI UTILITAS ==========================
 
@@ -15,16 +37,12 @@ def format_date(date_str):
 
 # ========================== FUNGSI EKSTRAKSI EVLN ==========================
 
-def extract_evl_text(pdf_file):
-    with pdfplumber.open(pdf_file) as pdf:
-        return "\n".join([p.extract_text() for p in pdf.pages if p.extract_text()])
-
 def clean_evl_text(text):
     text = re.sub(r"Reference No|Payment Receipt No", "", text)
     text = re.sub(r"[^A-Za-z\s]", "", text).strip()
     return " ".join(text.split()[:2])
 
-def extract_evl_data(text):
+def extract_evln(text):
     data = {
         "Name": "",
         "Place of Birth": "",
@@ -66,7 +84,7 @@ def split_birth_place_date(text):
     parts = text.split(", ")
     return (parts[0], format_date(parts[1])) if len(parts) == 2 else (text, None)
 
-def extract_sktt_data(pdf_file):
+def extract_sktt(pdf_file):
     with pdfplumber.open(pdf_file) as pdf:
         all_text = "\n".join([page.extract_text() for page in pdf.pages if page.extract_text()])
     data = {}
@@ -208,23 +226,32 @@ doc_type = st.selectbox("Pilih jenis dokumen", ["EVLN", "SKTT", "ITAS", "Notifik
 
 uploaded_files = st.file_uploader("Upload file PDF", type=["pdf"], accept_multiple_files=True)
 
-if uploaded_files and st.button("Ekstrak Data"):
-    results = []
-    for file in uploaded_files:
-        if doc_type == "EVLN":
-            text = extract_evl_text(file)
-            data = extract_evl_data(text)
-        elif doc_type == "SKTT":
-            data = extract_sktt_data(file)
-        elif doc_type == "ITAS":
-            text = extract_itas_text(file)  # Asumsikan Anda punya fungsi ini
-            data = extract_itas_data(text)  # Asumsikan Anda punya fungsi ini
-        elif doc_type == "Notifikasi":
-            text = extract_notifikasi_text(file)  # Asumsikan Anda punya fungsi ini
-            data = extract_notifikasi_data(text)  # Asumsikan Anda punya fungsi ini
+if uploaded_files:
+    all_data = []
+    for uploaded_file in uploaded_files:
+        with st.spinner(f"Mengekstrak: {uploaded_file.name}"):
+            text = extract_text_from_pdf(uploaded_file)
+            doc_type = detect_document_type(text)
+            st.write(f"**Jenis Dokumen:** {doc_type}")
+            st.text_area("Isi Dokumen", text, height=250)
 
-        data["File Name"] = file.name
-        results.append(data)
+            if doc_type == "SKTT":
+                data = extract_sktt(text)
+            elif doc_type == "EVLN":
+                data = extract_evln(text)
+            elif doc_type == "ITAS":
+                data = extract_itas(text)
+            elif doc_type == "ITK":
+                data = extract_itk(text)
+            elif doc_type == "Notifikasi":
+                data = extract_notifikasi(text)
+            else:
+                data = {"Error": "Jenis dokumen tidak dikenali"}
+
+            data["filename"] = uploaded_file.name
+            st.write("### Hasil Ekstraksi")
+            st.json(data)
+            all_data.append(data)
 
     df = pd.DataFrame(results)
     st.dataframe(df)
