@@ -9,6 +9,27 @@ import zipfile
 from datetime import datetime
 import io
 import base64
+import hashlib
+import json
+
+# Fungsi untuk hashing password
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+# Fungsi untuk memeriksa kredensial
+def check_credentials(username, password):
+    # Dalam implementasi nyata, gunakan database atau file yang lebih aman
+    # Ini hanya contoh sederhana
+    users = {
+        "admin": hash_password("admin123"),
+        "petugas": hash_password("petugas123"),
+        "manager": hash_password("manager123")
+    }
+    
+    hashed_pw = hash_password(password)
+    if username in users and users[username] == hashed_pw:
+        return True
+    return False
 
 # Fungsi untuk membersihkan teks
 def clean_text(text, is_name_or_pob=False):
@@ -344,270 +365,309 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Sisi kiri - sidebar
-with st.sidebar:
-    st.markdown('<div class="sidebar-header">PT LAMAN DAVINDO BAHMAN</div>', unsafe_allow_html=True)
-    st.image("https://via.placeholder.com/150x50?text=LDB", width=150)
-    
-    st.markdown(f'<p style="font-weight: 600; font-size: 1.2rem;">{get_greeting()}</p>', unsafe_allow_html=True)
-    
-    st.markdown('<div class="alert-warning">⚠️ Mohon Bayar Tagihan</div>', unsafe_allow_html=True)
-    st.button("Transfer", type="primary")
-    
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    
-    with st.expander("📋 Menu Utama"):
-        st.markdown("- 🏠 Beranda")
-        st.markdown("- 📄 Dokumen")
-        st.markdown("- 👥 Klien")
-        st.markdown("- ⚙️ Pengaturan")
-    
-    st.caption("© 2025 PT Laman Davindo Bahman")
+# Inisialisasi session state untuk login
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+if 'username' not in st.session_state:
+    st.session_state.username = ""
+if 'login_attempt' not in st.session_state:
+    st.session_state.login_attempt = 0
 
-# Header utama
-st.markdown('<div class="header"><h1 style="margin-bottom: 0.5rem;">📑 Ekstraksi Dokumen Imigrasi</h1><p style="opacity: 0.8;">Upload file PDF dan sistem akan mengekstrak data secara otomatis</p></div>', unsafe_allow_html=True)
+# Fungsi untuk login
+def login():
+    if st.session_state.username and st.session_state.password:
+        if check_credentials(st.session_state.username, st.session_state.password):
+            st.session_state.logged_in = True
+            st.session_state.login_attempt = 0
+        else:
+            st.session_state.login_attempt += 1
 
-# Kolom untuk input
-st.markdown('<div class="container">', unsafe_allow_html=True)
-st.markdown('<h2>Upload Dokumen</h2>', unsafe_allow_html=True)
+# Fungsi untuk logout
+def logout():
+    st.session_state.logged_in = False
+    st.session_state.username = ""
 
-col1, col2 = st.columns(2)
-with col1:
-    st.markdown('<div class="uploadfile">', unsafe_allow_html=True)
-    uploaded_files = st.file_uploader("Upload File PDF", type=["pdf"], accept_multiple_files=True)
-    if not uploaded_files:
-        st.markdown('<p style="color: #64748b; margin-top: 10px;">Tarik file PDF ke sini atau klik untuk memilih</p>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with col2:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    doc_type = st.selectbox(
-        "Pilih Jenis Dokumen",
-        ["SKTT", "EVLN", "ITAS", "ITK", "Notifikasi"]
-    )
-    
-    st.markdown('<div style="margin-top: 1rem;">', unsafe_allow_html=True)
-    use_name = st.checkbox("Gunakan Nama untuk Rename File", value=True)
-    use_passport = st.checkbox("Gunakan Nomor Paspor untuk Rename File", value=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Display badge untuk jenis dokumen
-    if doc_type:
-        badge_color = {
-            "SKTT": "#0284c7",
-            "EVLN": "#7c3aed",
-            "ITAS": "#16a34a",
-            "ITK": "#ca8a04",
-            "Notifikasi": "#e11d48"
-        }.get(doc_type, "#64748b")
-        
-        st.markdown(f'''
-        <div style="margin-top: 1rem;">
-            <span style="background-color: {badge_color}; color: white; padding: 0.3rem 0.6rem; 
-            border-radius: 0.25rem; font-size: 0.8rem; font-weight: 600;">
-                {doc_type}
-            </span>
-            <span style="font-size: 0.85rem; margin-left: 0.5rem; color: #64748b;">Terpilih</span>
-        </div>
-        ''', unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Tombol proses
-if uploaded_files:
-    st.markdown('<div class="container">', unsafe_allow_html=True)
-    
-    # Panel informasi file
-    st.markdown('<h3>File yang Diupload</h3>', unsafe_allow_html=True)
-    file_info_cols = st.columns(len(uploaded_files) if len(uploaded_files) <= 3 else 3)
-    
-    for i, uploaded_file in enumerate(uploaded_files):
-        col_idx = i % 3
-        with file_info_cols[col_idx]:
-            st.markdown(f'''
-            <div style="background-color: #f8fafc; border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem;">
-                <div style="display: flex; align-items: center;">
-                    <div style="background-color: #e2e8f0; border-radius: 0.375rem; padding: 0.5rem; margin-right: 0.75rem;">
-                        📄
-                    </div>
-                    <div>
-                        <p style="margin: 0; font-weight: 600; font-size: 0.9rem;">{uploaded_file.name}</p>
-                        <p style="margin: 0; color: #64748b; font-size: 0.8rem;">PDF Document</p>
-                    </div>
-                </div>
-            </div>
-            ''', unsafe_allow_html=True)
-    
-    # Tombol proses dengan style Tailwind-like
+# Halaman Login
+def login_page():
     col1, col2, col3 = st.columns([1, 2, 1])
+    
     with col2:
-        process_button = st.button(
-            f"Proses {len(uploaded_files)} File PDF", 
-            type="primary", 
-            use_container_width=True,
-            key="process_button"
-        )
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    if process_button:
-        # Tambahkan progress bar yang lebih menarik
-        progress_placeholder = st.empty()
-        progress_placeholder.markdown('''
-        <div style="background-color: #f1f5f9; border-radius: 0.5rem; padding: 1.5rem; text-align: center;">
-            <div style="margin-bottom: 1rem;">
-                <img src="https://via.placeholder.com/50x50?text=⚙️" width="50" height="50" style="margin: 0 auto;">
-            </div>
-            <h3 style="margin-bottom: 0.5rem;">Memproses Dokumen</h3>
-            <p style="color: #64748b;">Mohon tunggu sebentar sementara kami mengekstrak informasi dari dokumen Anda...</p>
-            <div style="margin-top: 1rem; height: 0.5rem; background-color: #e2e8f0; border-radius: 1rem; overflow: hidden;">
-                <div style="width: 75%; height: 100%; background: linear-gradient(90deg, #0ea5e9, #3b82f6); border-radius: 1rem; animation: progress 2s infinite;"></div>
-            </div>
-        </div>
-        ''', unsafe_allow_html=True)
-        
-        # Proses file
-        df, excel_path, renamed_files, zip_path, temp_dir = process_pdfs(
-            uploaded_files, doc_type, use_name, use_passport
-        )
-        
-        # Hapus placeholder progress
-        progress_placeholder.empty()
-        
-        # Tampilkan hasil dalam tab dengan styling yang lebih baik
-        st.markdown('<div class="container">', unsafe_allow_html=True)
         st.markdown('''
-        <div style="display: flex; align-items: center; margin-bottom: 1rem;">
-            <div style="background-color: #d1fae5; color: #047857; border-radius: 50%; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; margin-right: 0.75rem;">
-                ✓
-            </div>
-            <h2 style="margin: 0;">Proses Berhasil</h2>
+        <div style="text-align: center; padding: 2rem 0;">
+            <h1 style="margin-bottom: 0.5rem;">🖥️ PT LAMAN DAVINDO BAHMAN</h1>
+            <p style="opacity: 0.8; margin-bottom: 2rem;">Sistem Ekstraksi Dokumen Imigrasi</p>
         </div>
         ''', unsafe_allow_html=True)
         
-        tab1, tab2, tab3 = st.tabs(["💾 Hasil Ekstraksi", "📊 File Excel", "📁 File Rename"])
+        # Card login dengan styling yang lebih baik
+        st.markdown('''
+        <div style="background-color: white; border-radius: 0.5rem; padding: 2rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+            <h2 style="text-align: center; margin-bottom: 1.5rem;">Login Pengguna</h2>
+        ''', unsafe_allow_html=True)
         
-        with tab1:
-            st.subheader("Data Hasil Ekstraksi")
-            st.markdown('<div style="overflow-x: auto;">', unsafe_allow_html=True)
-            st.dataframe(df, use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+        # Form login
+        with st.form("login_form"):
+            st.text_input("Username", key="username")
+            st.text_input("Password", type="password", key="password")
             
-            # Tambahkan ringkasan data
-            st.markdown(f'''
-            <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
-                <div style="background-color: #f0f9ff; border-radius: 0.5rem; padding: 1rem; flex: 1;">
-                    <h4 style="margin: 0 0 0.5rem 0; color: #0369a1;">Total Data</h4>
-                    <p style="font-size: 1.5rem; font-weight: 600; margin: 0;">{len(df)}</p>
-                </div>
-                <div style="background-color: #f0fdf4; border-radius: 0.5rem; padding: 1rem; flex: 1;">
-                    <h4 style="margin: 0 0 0.5rem 0; color: #166534;">Jenis Dokumen</h4>
-                    <p style="font-size: 1.5rem; font-weight: 600; margin: 0;">{doc_type}</p>
-                </div>
-                <div style="background-color: #fef3c7; border-radius: 0.5rem; padding: 1rem; flex: 1;">
-                    <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">File Diproses</h4>
-                    <p style="font-size: 1.5rem; font-weight: 600; margin: 0;">{len(uploaded_files)}</p>
-                </div>
-            </div>
-            ''', unsafe_allow_html=True)
-        
-        with tab2:
-            st.subheader("Download File Excel")
+            # Tampilkan pesan error jika login gagal
+            if st.session_state.login_attempt > 0:
+                st.error(f"Username atau password salah! (Percobaan ke-{st.session_state.login_attempt})")
             
-            with open(excel_path, "rb") as f:
-                excel_data = f.read()
-            
-            # Tampilan download lebih menarik
-            col1, col2 = st.columns([2, 1])
+            # Tombol login
+            col1, col2 = st.columns([3, 1])
             with col1:
-                st.markdown('''
-                <div style="background-color: #f8fafc; border-radius: 0.5rem; padding: 1rem; display: flex; align-items: center;">
-                    <div style="background-color: #22c55e; border-radius: 0.5rem; padding: 0.75rem; margin-right: 1rem;">
-                        <span style="color: white; font-size: 1.5rem;">📊</span>
-                    </div>
-                    <div>
-                        <p style="margin: 0; font-weight: 600;">Hasil_Ekstraksi.xlsx</p>
-                        <p style="margin: 0; color: #64748b; font-size: 0.85rem;">Excel Spreadsheet • Diekspor pada {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
-                    </div>
-                </div>
-                ''', unsafe_allow_html=True)
-            
+                submit = st.form_submit_button("Login", on_click=login, use_container_width=True)
             with col2:
-                st.download_button(
-                    label="Download Excel",
-                    data=excel_data,
-                    file_name="Hasil_Ekstraksi.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
-                )
+                demo = st.form_submit_button("Demo", use_container_width=True)
+                if demo:
+                    st.session_state.username = "demo"
+                    st.session_state.password = "demo123"
+                    login()
         
-        with tab3:
-            st.subheader("File yang Telah di-Rename")
-            
-            # Tampilkan daftar file dengan UI yang lebih baik
-            st.markdown('<div style="background-color: #f8fafc; border-radius: 0.5rem; padding: 1rem;">', unsafe_allow_html=True)
-            
-            for original_name, file_info in renamed_files.items():
-                st.markdown(f'''
-                <div style="display: flex; align-items: center; padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">
-                    <div style="flex: 1;">
-                        <p style="margin: 0; color: #64748b; font-size: 0.85rem;">Nama Asli:</p>
-                        <p style="margin: 0; font-weight: 600;">{original_name}</p>
-                    </div>
-                    <div style="margin: 0 1rem;">
-                        <span style="color: #64748b;">→</span>
-                    </div>
-                    <div style="flex: 1;">
-                        <p style="margin: 0; color: #64748b; font-size: 0.85rem;">Nama Baru:</p>
-                        <p style="margin: 0; font-weight: 600; color: #0369a1;">{file_info['new_name']}</p>
-                    </div>
-                </div>
-                ''', unsafe_allow_html=True)
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Tombol download ZIP
-            with open(zip_path, "rb") as f:
-                zip_data = f.read()
-            
-            st.markdown('<div style="margin-top: 1rem;">', unsafe_allow_html=True)
-            st.download_button(
-                label="Download Semua File PDF (ZIP)",
-                data=zip_data,
-                file_name="Renamed_Files.zip",
-                mime="application/zip",
-                use_container_width=True
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Hapus folder sementara setelah selesai
-        shutil.rmtree(temp_dir)
+        st.markdown('''
+        <div style="text-align: center; margin-top: 1rem;">
+            <p style="color: #64748b; font-size: 0.85rem;">© 2025 PT Laman Davindo Bahman</p>
+            <p style="color: #94a3b8; font-size: 0.75rem;">Versi 1.0.0</p>
+        </div>
+        ''', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
-else:
-    st.markdown('''
-    <div class="alert-info">
-        <h3 style="margin-top: 0;">Mulai Ekstraksi</h3>
-        <p>Silakan upload file PDF dokumen imigrasi untuk memulai proses ekstraksi otomatis.</p>
-        <ul style="margin-bottom: 0;">
-            <li>Pastikan file dalam format PDF</li>
-            <li>Pilih jenis dokumen yang sesuai</li>
-            <li>Sesuaikan opsi penamaan file jika diperlukan</li>
-        </ul>
-    </div>
-    ''', unsafe_allow_html=True)
+
+# Aplikasi Utama
+def main():
+    # Cek status login
+    if not st.session_state.logged_in:
+        login_page()
+    else:
+        # Sisi kiri - sidebar
+        with st.sidebar:
+            st.markdown('<div class="sidebar-header">PT LAMAN DAVINDO BAHMAN</div>', unsafe_allow_html=True)
+            st.image("https://via.placeholder.com/150x50?text=LDB", width=150)
+            
+            st.markdown(f'<p style="font-weight: 600; font-size: 1.2rem;">{get_greeting()}, {st.session_state.username}!</p>', unsafe_allow_html=True)
+            
+            st.markdown('<div class="alert-warning">⚠️ Mohon Bayar Tagihan</div>', unsafe_allow_html=True)
+            st.button("Transfer", type="primary")
+            
+            st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+            
+            with st.expander("📋 Menu Utama"):
+                st.markdown("- 🏠 Beranda")
+                st.markdown("- 📄 Dokumen")
+                st.markdown("- 👥 Klien")
+                st.markdown("- ⚙️ Pengaturan")
+            
+            # Tombol logout di sidebar
+            if st.button("Logout", type="secondary", use_container_width=True):
+                logout()
+                st.rerun()
+            
+            st.caption("© 2025 PT Laman Davindo Bahman")
+
+        # Header utama
+        st.markdown('<div class="header"><h1 style="margin-bottom: 0.5rem;">📑 Ekstraksi Dokumen Imigrasi</h1><p style="opacity: 0.8;">Upload file PDF dan sistem akan mengekstrak data secara otomatis</p></div>', unsafe_allow_html=True)
+
+        # Kolom untuk input
+        st.markdown('<div class="container">', unsafe_allow_html=True)
+        st.markdown('<h2>Upload Dokumen</h2>', unsafe_allow_html=True)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown('<div class="uploadfile">', unsafe_allow_html=True)
+            uploaded_files = st.file_uploader("Upload File PDF", type=["pdf"], accept_multiple_files=True)
+            if not uploaded_files:
+                st.markdown('<p style="color: #64748b; margin-top: 10px;">Tarik file PDF ke sini atau klik untuk memilih</p>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with col2:
+            st.markdown('<div class="card">', unsafe_allow_html=True)
+            doc_type = st.selectbox(
+                "Pilih Jenis Dokumen",
+                ["SKTT", "EVLN", "ITAS", "ITK", "Notifikasi"]
+            )
+            
+            st.markdown('<div style="margin-top: 1rem;">', unsafe_allow_html=True)
+            use_name = st.checkbox("Gunakan Nama untuk Rename File", value=True)
+            use_passport = st.checkbox("Gunakan Nomor Paspor untuk Rename File", value=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Display badge untuk jenis dokumen
+            if doc_type:
+                badge_color = {
+                    "SKTT": "#0284c7",
+                    "EVLN": "#7c3aed",
+                    "ITAS": "#16a34a",
+                    "ITK": "#ca8a04",
+                    "Notifikasi": "#e11d48"
+                }.get(doc_type, "#64748b")
+                
+                st.markdown(f'''
+                <div style="margin-top: 1rem;">
+                    <span style="background-color: {badge_color}; color: white; padding: 0.3rem 0.6rem; 
+                    border-radius: 0.25rem; font-size: 0.8rem; font-weight: 600;">
+                        {doc_type}
+                    </span>
+                    <span style="font-size: 0.85rem; margin-left: 0.5rem; color: #64748b;">Terpilih</span>
+                </div>
+                ''', unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # Tombol proses
+        if uploaded_files:
+            # ... (Bagian tombol proses dan pemrosesan file sama seperti di aplikasi asli Anda) ...
+            st.markdown('<div class="container">', unsafe_allow_html=True)
+            
+            # Panel informasi file
+            st.markdown('<h3>File yang Diupload</h3>', unsafe_allow_html=True)
+            file_info_cols = st.columns(len(uploaded_files) if len(uploaded_files) <= 3 else 3)
+            
+            for i, uploaded_file in enumerate(uploaded_files):
+                col_idx = i % 3
+                with file_info_cols[col_idx]:
+                    st.markdown(f'''
+                    <div style="background-color: #f8fafc; border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem;">
+                        <div style="display: flex; align-items: center;">
+                            <div style="background-color: #e2e8f0; border-radius: 0.375rem; padding: 0.5rem; margin-right: 0.75rem;">
+                                📄
+                            </div>
+                            <div>
+                                <p style="margin: 0; font-weight: 600; font-size: 0.9rem;">{uploaded_file.name}</p>
+                                <p style="margin: 0; color: #64748b; font-size: 0.8rem;">PDF Document</p>
+                            </div>
+                        </div>
+                    </div>
+                    ''', unsafe_allow_html=True)
+            
+            # Tombol proses dengan style Tailwind-like
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                process_button = st.button(
+                    f"Proses {len(uploaded_files)} File PDF", 
+                    type="primary", 
+                    use_container_width=True,
+                    key="process_button"
+                )
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            # ... (Bagian pemrosesan file setelah tombol ditekan sama seperti di aplikasi asli Anda) ...
+        else:
+            st.markdown('''
+            <div class="alert-info">
+                <h3 style="margin-top: 0;">Mulai Ekstraksi</h3>
+                <p>Silakan upload file PDF dokumen imigrasi untuk memulai proses ekstraksi otomatis.</p>
+                <ul style="margin-bottom: 0;">
+                    <li>Pastikan file dalam format PDF</li>
+                    <li>Pilih jenis dokumen yang sesuai</li>
+                    <li>Sesuaikan opsi penamaan file jika diperlukan</li>
+                </ul>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+        # Tambahkan informasi bantuan
+        with st.expander("Bantuan"):
+            st.write("""
+            **Cara Menggunakan Aplikasi:**
+            1. Upload satu atau beberapa file PDF dokumen imigrasi
+            2. Pilih jenis dokumen yang sesuai (SKTT, EVLN, ITAS, ITK, Notifikasi)
+            3. Tentukan apakah ingin menyertakan nama dan/atau nomor paspor dalam nama file
+            4. Klik tombol "Proses PDF" untuk mulai mengekstrak data
+            5. Lihat dan unduh hasil ekstraksi dalam format Excel atau file PDF yang sudah direname
+            
+            **Catatan:** Aplikasi ini dapat menangani beberapa jenis dokumen imigrasi Indonesia dan akan secara otomatis mengekstrak informasi penting dari dokumen-dokumen tersebut.
+            """)
+    # Custom CSS
+def apply_custom_css():
+    st.markdown("""
+    <style>
+    /* Base styling */
+    body {
+        font-family: 'Inter', sans-serif;
+        color: #1e293b;
+    }
     
-# Tambahkan informasi bantuan
-with st.expander("Bantuan"):
-    st.write("""
-    **Cara Menggunakan Aplikasi:**
-    1. Upload satu atau beberapa file PDF dokumen imigrasi
-    2. Pilih jenis dokumen yang sesuai (SKTT, EVLN, ITAS, ITK, Notifikasi)
-    3. Tentukan apakah ingin menyertakan nama dan/atau nomor paspor dalam nama file
-    4. Klik tombol "Proses PDF" untuk mulai mengekstrak data
-    5. Lihat dan unduh hasil ekstraksi dalam format Excel atau file PDF yang sudah direname
+    /* Login page styles */
+    .login-container {
+        max-width: 400px;
+        margin: 0 auto;
+    }
     
-    **Catatan:** Aplikasi ini dapat menangani beberapa jenis dokumen imigrasi Indonesia dan akan secara otomatis mengekstrak informasi penting dari dokumen-dokumen tersebut.
-    """)
+    /* Header styles */
+    .header {
+        padding: 1rem 0;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Sidebar styles */
+    .sidebar-header {
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .divider {
+        height: 1px;
+        background-color: #e2e8f0;
+        margin: 1rem 0;
+    }
+    
+    /* Alert styles */
+    .alert-info {
+        background-color: #eff6ff;
+        border-left: 4px solid #3b82f6;
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+    
+    .alert-warning {
+        background-color: #fff7ed;
+        border-left: 4px solid #f97316;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Container styles */
+    .container {
+        background-color: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        margin-bottom: 1.5rem;
+    }
+    
+    .card {
+        background-color: #f8fafc;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        height: 100%;
+    }
+    
+    /* Form styles */
+    .uploadfile {
+        border: 2px dashed #cbd5e1;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    /* Progress animation */
+    @keyframes progress {
+        0% { width: 0%; }
+        50% { width: 100%; }
+        100% { width: 0%; }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# Main program execution
+if __name__ == "__main__":
+    apply_custom_css()
+    main()
