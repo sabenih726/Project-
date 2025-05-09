@@ -446,16 +446,16 @@ def main():
                         
             st.markdown(f'<p style="font-weight: 600; font-size: 1.2rem;">{get_greeting()}</p>', unsafe_allow_html=True)
             
-            st.markdown('<div class="alert-warning">⚠️ Mohon Bayar Tagihan</div>', unsafe_allow_html=True)
+            st.markdown('<div class="alert-warning">⚠️ Please Pay the Bill</div>', unsafe_allow_html=True)
             st.button("Transfer", type="primary")
             
             st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
             
-            with st.expander("📋 Menu Utama"):
-                st.markdown("- 🏠 Beranda")
-                st.markdown("- 📄 Dokumen")
-                st.markdown("- 👥 Klien")
-                st.markdown("- ⚙️ Pengaturan")
+            with st.expander("📋 Main Menu"):
+                st.markdown("- 🏠 Home")
+                st.markdown("- 📄 Document")
+                st.markdown("- 👥 Client")
+                st.markdown("- ⚙️ Settings")
             
             # Tombol logout di sidebar
             if st.button("Logout", type="secondary", use_container_width=True):
@@ -465,30 +465,30 @@ def main():
             st.caption("© 2025 PT Laman Davindo Bahman")
 
         # Header utama
-        st.markdown('<div class="header"><h1 style="margin-bottom: 0.5rem;">📑 Ekstraksi Dokumen Imigrasi</h1><p style="opacity: 0.8;">Upload file PDF dan sistem akan mengekstrak data secara otomatis</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="header"><h1 style="margin-bottom: 0.5rem;">📑 Extraction of Immigration Documents</h1><p style="opacity: 0.8;">Upload the PDF file and the system will extract the data automatically</p></div>', unsafe_allow_html=True)
 
         # Kolom untuk input
         st.markdown('<div class="container">', unsafe_allow_html=True)
-        st.markdown('<h2>Upload Dokumen</h2>', unsafe_allow_html=True)
+        st.markdown('<h2>Document Upload</h2>', unsafe_allow_html=True)
 
         col1, col2 = st.columns(2)
         with col1:
             st.markdown('<div class="uploadfile">', unsafe_allow_html=True)
             uploaded_files = st.file_uploader("Upload File PDF", type=["pdf"], accept_multiple_files=True)
             if not uploaded_files:
-                st.markdown('<p style="color: #64748b; margin-top: 10px;">Tarik file PDF ke sini atau klik untuk memilih</p>', unsafe_allow_html=True)
+                st.markdown('<p style="color: #64748b; margin-top: 10px;">Drag the PDF file here or click to select</p>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
         with col2:
             st.markdown('<div class="card">', unsafe_allow_html=True)
             doc_type = st.selectbox(
-                "Pilih Jenis Dokumen",
+                "Select Document Type",
                 ["SKTT", "EVLN", "ITAS", "ITK", "Notifikasi"]
             )
             
             st.markdown('<div style="margin-top: 1rem;">', unsafe_allow_html=True)
-            use_name = st.checkbox("Gunakan Nama untuk Rename File", value=True)
-            use_passport = st.checkbox("Gunakan Nomor Paspor untuk Rename File", value=True)
+            use_name = st.checkbox("Use Name to Rename Files", value=True)
+            use_passport = st.checkbox("Use Passport Number to Rename Files", value=True)
             st.markdown('</div>', unsafe_allow_html=True)
             
             # Display badge untuk jenis dokumen
@@ -507,7 +507,7 @@ def main():
                     border-radius: 0.25rem; font-size: 0.8rem; font-weight: 600;">
                         {doc_type}
                     </span>
-                    <span style="font-size: 0.85rem; margin-left: 0.5rem; color: #64748b;">Terpilih</span>
+                    <span style="font-size: 0.85rem; margin-left: 0.5rem; color: #64748b;">Selected</span>
                 </div>
                 ''', unsafe_allow_html=True)
             
@@ -520,7 +520,7 @@ def main():
             st.markdown('<div class="container">', unsafe_allow_html=True)
     
             # Panel informasi file
-            st.markdown('<h3>File yang Diupload</h3>', unsafe_allow_html=True)
+            st.markdown('<h3>Uploaded Files</h3>', unsafe_allow_html=True)
             file_info_cols = st.columns(len(uploaded_files) if len(uploaded_files) <= 3 else 3)
     
             for i, uploaded_file in enumerate(uploaded_files):
@@ -560,8 +560,8 @@ def main():
                     <div style="margin-bottom: 1rem;">
                         <img src="https://via.placeholder.com/50x50?text=⚙️" width="50" height="50" style="margin: 0 auto;">
                     </div>
-                    <h3 style="margin-bottom: 0.5rem;">Memproses Dokumen</h3>
-                    <p style="color: #64748b;">Mohon tunggu sebentar sementara kami mengekstrak informasi dari dokumen Anda...</p>
+                    <h3 style="margin-bottom: 0.5rem;">Processing Documents</h3>
+                    <p style="color: #64748b;">Please wait a moment while we extract the information from your document...</p>
                     <div style="margin-top: 1rem; height: 0.5rem; background-color: #e2e8f0; border-radius: 1rem; overflow: hidden;">
                         <div style="width: 75%; height: 100%; background: linear-gradient(90deg, #0ea5e9, #3b82f6); border-radius: 1rem; animation: progress 2s infinite;"></div>
                     </div>
@@ -587,10 +587,10 @@ def main():
                 </div>
                 ''', unsafe_allow_html=True)
         
-                tab1, tab2, tab3 = st.tabs(["💾 Hasil Ekstraksi", "📊 File Excel", "📁 File Rename"])
+                tab1, tab2, tab3 = st.tabs(["💾 Extraction Result", "📊 Excel File", "📁 File Rename"])
         
                 with tab1:
-                    st.subheader("Data Hasil Ekstraksi")
+                    st.subheader("Extraction Result Data")
                     st.markdown('<div style="overflow-x: auto;">', unsafe_allow_html=True)
                     st.dataframe(df, use_container_width=True)
                     st.markdown('</div>', unsafe_allow_html=True)
@@ -603,11 +603,11 @@ def main():
                             <p style="font-size: 1.5rem; font-weight: 600; margin: 0;">{len(df)}</p>
                         </div>
                         <div style="background-color: #f0fdf4; border-radius: 0.5rem; padding: 1rem; flex: 1;">
-                            <h4 style="margin: 0 0 0.5rem 0; color: #166534;">Jenis Dokumen</h4>
+                            <h4 style="margin: 0 0 0.5rem 0; color: #166534;">Type of Document</h4>
                             <p style="font-size: 1.5rem; font-weight: 600; margin: 0;">{doc_type}</p>
                         </div>
                         <div style="background-color: #fef3c7; border-radius: 0.5rem; padding: 1rem; flex: 1;">
-                            <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">File Diproses</h4>
+                            <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">Processed Files</h4>
                             <p style="font-size: 1.5rem; font-weight: 600; margin: 0;">{len(uploaded_files)}</p>
                         </div>
                     </div>
@@ -674,7 +674,7 @@ def main():
             
                     st.markdown('<div style="margin-top: 1rem;">', unsafe_allow_html=True)
                     st.download_button(
-                        label="Download Semua File PDF (ZIP)",
+                        label="Download All PDF (ZIP) Files",
                         data=zip_data,
                         file_name="Renamed_Files.zip",
                         mime="application/zip",
@@ -690,11 +690,11 @@ def main():
             st.markdown('''
             <div class="alert-info">
                 <h3 style="margin-top: 0;">Mulai Ekstraksi</h3>
-                <p>Silakan upload file PDF dokumen imigrasi untuk memulai proses ekstraksi otomatis.</p>
+                <p>Please upload PDF files of immigration documents to start the automatic extraction process.</p>
                 <ul style="margin-bottom: 0;">
-                    <li>Pastikan file dalam format PDF</li>
-                    <li>Pilih jenis dokumen yang sesuai</li>
-                    <li>Sesuaikan opsi penamaan file jika diperlukan</li>
+                    <li>Make sure the files are in PDF format</li>
+                    <li>Choose the appropriate document type</li>
+                    <li>Customise the file naming options if required</li>
                 </ul>
             </div>
             ''', unsafe_allow_html=True)
@@ -702,14 +702,14 @@ def main():
         # Tambahkan informasi bantuan
         with st.expander("Bantuan"):
             st.write("""
-            **Cara Menggunakan Aplikasi:**
-            1. Upload satu atau beberapa file PDF dokumen imigrasi
-            2. Pilih jenis dokumen yang sesuai (SKTT, EVLN, ITAS, ITK, Notifikasi)
-            3. Tentukan apakah ingin menyertakan nama dan/atau nomor paspor dalam nama file
-            4. Klik tombol "Proses PDF" untuk mulai mengekstrak data
-            5. Lihat dan unduh hasil ekstraksi dalam format Excel atau file PDF yang sudah direname
+            **How to Use the Application:**
+            1. Upload one or more PDF files of immigration documents
+            2. Select the appropriate document type (SKTT, EVLN, ITAS, ITK, Notification)
+            3. Specify whether to include the name and/or passport number in the file name
+            4. Click the ‘Process PDF’ button to start extracting data
+            5. View and download the extracted results in Excel format or a renamed PDF file
             
-            **Catatan:** Aplikasi ini dapat menangani beberapa jenis dokumen imigrasi Indonesia dan akan secara otomatis mengekstrak informasi penting dari dokumen-dokumen tersebut.
+            **Note:** This app can handle multiple types of Indonesian immigration documents and will automatically extract important information from them.
             """)
 
 # Main program execution
