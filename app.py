@@ -700,7 +700,7 @@ def main():
             ''', unsafe_allow_html=True)
      
         # Tambahkan informasi bantuan
-        with st.expander("Bantuan"):
+        with st.expander("Help"):
             st.write("""
             **How to Use the Application:**
             1. Upload one or more PDF files of immigration documents
