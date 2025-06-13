@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - PT Laman Davindo Bahman</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <div class="bg-blue-100 w-10 h-10 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-desktop text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">PT Laman Davindo Bahman</h1>
+                        <p class="text-sm text-gray-600">Sistem Ekstraksi Dokumen Imigrasi</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="text-sm text-gray-600">{{ greeting }}</p>
+                        <p class="font-medium text-gray-900">{{ username.title() }}</p>
+                    </div>
+                    <a href="/logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <i class="fas fa-file-pdf text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Dokumen</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalDocs">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Berhasil Diproses</p>
+                        <p class="text-2xl font-bold text-gray-900" id="processedDocs">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-yellow-100 rounded-lg">
+                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Sedang Diproses</p>
+                        <p class="text-2xl font-bold text-gray-900" id="processingDocs">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <i class="fas fa-download text-purple-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Download Ready</p>
+                        <p class="text-2xl font-bold text-gray-900" id="readyDownload">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="bg-white rounded-lg shadow mb-8">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Upload & Proses Dokumen</h2>
+            </div>
+            <div class="p-6">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="files" class="block text-sm font-medium text-gray-700 mb-2">
+                                Pilih File PDF
+                            </label>
+                            <input type="file" id="files" name="files" multiple accept=".pdf" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <p class="text-xs text-gray-500 mt-1">Pilih satu atau lebih file PDF (Max 16MB per file)</p>
+                        </div>
+
+                        <div>
+                            <label for="docType" class="block text-sm font-medium text-gray-700 mb-2">
+                                Jenis Dokumen
+                            </label>
+                            <select id="docType" name="doc_type" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="SKTT">SKTT</option>
+                                <option value="EVLN">EVLN</option>
+                                <option value="ITAS">ITAS</option>
+                                <option value="ITK">ITK</option>
+                                <option value="Notifikasi">Notifikasi</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Opsi Penamaan File</label>
+                        <div class="flex space-x-6">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="useName" name="use_name" checked
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <span class="ml-2 text-sm text-gray-700">Gunakan Nama</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="usePassport" name="use_passport" checked
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <span class="ml-2 text-sm text-gray-700">Gunakan Nomor Paspor/KITAS</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <button type="submit" id="uploadBtn"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200">
+                            <i class="fas fa-upload mr-2"></i>
+                            <span id="uploadBtnText">Upload & Proses</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Progress Bar -->
+                <div id="progressContainer" class="hidden mt-6">
+                    <div class="bg-gray-200 rounded-full h-2">
+                        <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p id="progressText" class="text-sm text-gray-600 mt-2">Memproses dokumen...</p>
+                </div>
+
+                <!-- Results -->
+                <div id="resultsContainer" class="hidden mt-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Hasil Ekstraksi</h3>
+                        <div class="space-x-2">
+                            <button id="downloadExcel" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition duration-200">
+                                <i class="fas fa-file-excel mr-2"></i>Download Excel
+                            </button>
+                            <button id="downloadZip" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition duration-200">
+                                <i class="fas fa-file-archive mr-2"></i>Download ZIP
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div id="resultsTable" class="overflow-x-auto"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="alertContainer" class="fixed top-4 right-4 z-50"></div>
+    </main>
+
+    <script>
+        // DOM Elements
+        const uploadForm = document.getElementById('uploadForm');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadBtnText = document.getElementById('uploadBtnText');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const resultsTable = document.getElementById('resultsTable');
+        const downloadExcel = document.getElementById('downloadExcel');
+        const downloadZip = document.getElementById('downloadZip');
+        const alertContainer = document.getElementById('alertContainer');
+
+        // Utility Functions
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            const iconClass = type === 'success' ? 'fa-check-circle text-green-600' : 
+                             type === 'error' ? 'fa-exclamation-circle text-red-600' : 
+                             'fa-info-circle text-blue-600';
+            const bgClass = type === 'success' ? 'bg-green-50 border-green-200' : 
+                           type === 'error' ? 'bg-red-50 border-red-200' : 
+                           'bg-blue-50 border-blue-200';
+
+            alertDiv.className = `${bgClass} border rounded-lg p-4 mb-4 shadow-lg max-w-md`;
+            alertDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${iconClass} mr-3"></i>
+                    <p class="text-sm text-gray-800">${message}</p>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-auto text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            alertContainer.appendChild(alertDiv);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentElement) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        function setUploadState(isUploading) {
+            if (isUploading) {
+                uploadBtn.disabled = true;
+                uploadBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                uploadBtnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memproses...';
+                progressContainer.classList.remove('hidden');
+            } else {
+                uploadBtn.disabled = false;
+                uploadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                uploadBtnText.innerHTML = '<i class="fas fa-upload mr-2"></i>Upload & Proses';
+                progressContainer.classList.add('hidden');
+            }
+        }
+
+        function updateProgress(percent, text) {
+            progressBar.style.width = `${percent}%`;
+            progressText.textContent = text;
+        }
+
+        function displayResults(data) {
+            if (!data || data.length === 0) {
+                resultsTable.innerHTML = '<p class="text-gray-600">Tidak ada data untuk ditampilkan.</p>';
+                return;
+            }
+
+            const headers = Object.keys(data[0]);
+            let tableHTML = `
+                <table class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            ${headers.map(header => `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">${header}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        ${data.map(row => `
+                            <tr class="hover:bg-gray-50">
+                                ${headers.map(header => `<td class="px-4 py-3 text-sm text-gray-900 border-b">${row[header] || '-'}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            resultsTable.innerHTML = tableHTML;
+            resultsContainer.classList.remove('hidden');
+        }
+
+        // Event Listeners
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData();
+            const files = document.getElementById('files').files;
+            const docType = document.getElementById('docType').value;
+            const useName = document.getElementById('useName').checked;
+            const usePassport = document.getElementById('usePassport').checked;
+
+            if (files.length === 0) {
+                showAlert('Pilih minimal satu file PDF!', 'error');
+                return;
+            }
+
+            // Add files to form data
+            for (let file of files) {
+                formData.append('files', file);
+            }
+            formData.append('doc_type', docType);
+            formData.append('use_name', useName);
+            formData.append('use_passport', usePassport);
+
+            setUploadState(true);
+            updateProgress(0, 'Memulai upload...');
+
+            try {
+                updateProgress(25, 'Mengupload file...');
+                
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                updateProgress(75, 'Memproses dokumen...');
+
+                const result = await response.json();
+
+                if (result.success) {
+                    updateProgress(100, 'Selesai!');
+                    showAlert(`Berhasil memproses ${result.total_files} dokumen ${result.doc_type}`, 'success');
+                    displayResults(result.data);
+                    
+                    // Update stats
+                    document.getElementById('totalDocs').textContent = result.total_files;
+                    document.getElementById('processedDocs').textContent = result.total_files;
+                    document.getElementById('readyDownload').textContent = '2'; // Excel + ZIP
+                } else {
+                    throw new Error(result.error || 'Upload gagal');
+                }
+            } catch (error) {
+                showAlert(`Error: ${error.message}`, 'error');
+            } finally {
+                setUploadState(false);
+            }
+        });
+
+        downloadExcel.addEventListener('click', () => {
+            window.location.href = '/download/excel';
+        });
+
+        downloadZip.addEventListener('click', () => {
+            window.location.href = '/download/zip';
+        });
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if there's existing data
+            fetch('/api/session-info')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.has_data) {
+                        document.getElementById('readyDownload').textContent = '2';
+                        showAlert('Data dari sesi sebelumnya masih tersedia untuk didownload.', 'info');
+                    }
+                })
+                .catch(error => console.log('No previous session data'));
+        });
+    </script>
+</body>
+</html>
